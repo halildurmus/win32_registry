@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:ffi';
 
+import 'package:compute/compute.dart';
 import 'package:ffi/ffi.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:win32/win32.dart';
 
 import 'registry_key_info.dart';
@@ -185,6 +188,42 @@ class RegistryKey {
     } finally {
       free(lpSubKeyName);
       free(lpNewKeyName);
+    }
+  }
+
+  Stream<void> observeValuesChanges({bool includeSubkeys = false}) {
+    return Rx.repeat((_) => Rx.fromCallable(
+        () => _waitForValueChange(includeSubkeys: includeSubkeys)));
+  }
+
+  Future<void> _waitForValueChange({bool includeSubkeys = false}) async {
+    await compute(_waitForEvent, includeSubkeys);
+  }
+
+  void _waitForEvent(bool includeSubkeys) {
+    try {
+      final eventHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+      if (eventHandle == NULL) {
+        throw Exception('Unable to create event');
+      }
+
+      final registerResult = RegNotifyChangeKeyValue(
+        hkey,
+        includeSubkeys ? TRUE : FALSE,
+        1 | 4,
+        eventHandle,
+        FALSE,
+      );
+
+      if (registerResult != ERROR_SUCCESS) {
+        CloseHandle(eventHandle);
+        throw WindowsException(HRESULT_FROM_WIN32(registerResult));
+      }
+
+      CloseHandle(eventHandle);
+    } catch (e) {
+      rethrow;
     }
   }
 
