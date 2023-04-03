@@ -242,4 +242,66 @@ void main() {
     expect(() => hkcu.createKey(subkeyName), throwsA(isA<WindowsException>()));
     expect(hkcu.subkeyNames.contains(subkeyName), false);
   });
+
+  test('ObserveValueChanges emits events when subkey values change', () async {
+    final hkcu = Registry.openPath(RegistryHive.currentUser,
+        desiredAccessRights: AccessRights.allAccess);
+
+    const subkeyName = 'Win32RegistryStreamTestKey';
+    final subkey = hkcu.createKey(subkeyName);
+    expect(hkcu.subkeyNames.contains(subkeyName), true);
+
+    const deeperSubkeyName = 'DeeperKey';
+    final deeperSubkey = subkey.createKey(deeperSubkeyName);
+    expect(subkey.subkeyNames.contains(deeperSubkeyName), true);
+
+    final streamFuture = expectLater(
+        // two events for create subkeys
+        // two events for create deeper keys
+        // two events for delete subkeys
+        subkey.observeValuesChanges(includeSubkeys: true).take(6),
+        emitsAnyOf([null]));
+
+    final deepValue =
+        const RegistryValue('DeeperTestValue', RegistryValueType.int32, 1234);
+
+    final deepValue2 =
+        const RegistryValue('DeeperTestValue2', RegistryValueType.int32, 1234);
+
+    final value =
+        const RegistryValue('TestValue', RegistryValueType.int32, 1234);
+
+    final value2 =
+        const RegistryValue('TestValue2', RegistryValueType.int32, 1234);
+
+    deeperSubkey
+      ..createValue(deepValue)
+      ..createValue(deepValue2);
+
+    subkey
+      ..createValue(value)
+      ..createValue(value2);
+
+    expect(deeperSubkey.getValue('DeeperTestValue', expandPaths: false),
+        isNotNull);
+    expect(deeperSubkey.getValue('DeeperTestValue2', expandPaths: false),
+        isNotNull);
+
+    expect(subkey.getValue('TestValue', expandPaths: false), isNotNull);
+    expect(subkey.getValue('TestValue2', expandPaths: false), isNotNull);
+
+    await Future<void>.delayed(const Duration(seconds: 1));
+
+    subkey
+      ..deleteValue('TestValue')
+      ..deleteValue('TestValue2');
+
+    expect(subkey.getValue('TestValue', expandPaths: false), isNull);
+    expect(subkey.getValue('TestValue2', expandPaths: false), isNull);
+
+    await streamFuture.then((_) {
+      hkcu.deleteKey(subkeyName, recursive: true);
+      expect(hkcu.subkeyNames.contains(subkeyName), isFalse);
+    });
+  });
 }
