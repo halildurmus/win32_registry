@@ -202,26 +202,19 @@ class RegistryKey {
 
   void _waitForEvent(bool includeSubkeys) {
     try {
-      final eventHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-
-      if (eventHandle == NULL) {
-        throw Exception('Unable to create event');
-      }
-
       final registerResult = RegNotifyChangeKeyValue(
         hkey,
         includeSubkeys ? TRUE : FALSE,
-        1 | 4,
-        eventHandle,
+        // REG_NOTIFY_CHANGE_NAME, REG_NOTIFY_CHANGE_ATTRIBUTES,
+        // REG_NOTIFY_CHANGE_LAST_SET
+        1 | 2 | 4,
+        NULL,
         FALSE,
       );
 
       if (registerResult != ERROR_SUCCESS) {
-        CloseHandle(eventHandle);
         throw WindowsException(HRESULT_FROM_WIN32(registerResult));
       }
-
-      CloseHandle(eventHandle);
     } catch (e) {
       rethrow;
     }
