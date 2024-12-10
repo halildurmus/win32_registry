@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 ### 🐛 Bug Fixes
 
 - Export `RegistryKeyInfo` class - ([d73d0b0](https://github.com/halildurmus/win32_registry/commit/d73d0b090821ba97e68b28758946eaed17a5aa33))
-- Export access_rights so Registry.openPath can be called with desiredAccessRights ([#26](https://github.com/halildurmus/win32_registry/issues/26)) - ([207b812](https://github.com/halildurmus/win32_registry/commit/207b8123cb2c8abea2755923c41c3d486588da86))
+- Export `AccessRights` enum ([#26](https://github.com/halildurmus/win32_registry/issues/26)) - ([207b812](https://github.com/halildurmus/win32_registry/commit/207b8123cb2c8abea2755923c41c3d486588da86))
 
 [2.0.1]: https://github.com/halildurmus/win32_registry/compare/v2.0.0..v2.0.1
 
