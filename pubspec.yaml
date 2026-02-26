@@ -23,7 +23,7 @@ dependencies:
   collection: ^1.19.1
   ffi: ^2.2.0
   ffi_leak_tracker: ^0.1.0
-  meta: ^1.18.1
+  meta: ^1.17.0
   win32: ^6.0.0
 
 dev_dependencies:
